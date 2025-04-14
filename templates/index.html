@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Beauty Salon - 美容の最新トレンド{% endblock %}
+
+{% block content %}
+<header class="hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="display-4">美しさを引き出す<br>最高の空間</h1>
+                <p class="lead">トレンドと技術で、あなたの魅力を最大限に</p>
+                <a href="#" class="btn btn-primary mt-3">ご予約はこちら</a>
+            </div>
+            <div class="col-md-6 text-center">
+                <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="美容室イメージ" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</header>
+
+<section class="blog-posts">
+    <div class="container mt-5">
+        <h2 class="section-title text-center mb-4">最新のブログ記事</h2>
+        <div class="row">
+            {% for post in posts %}
+            <div class="col-md-4 mb-4">
+                <div class="card post-card">
+                    <img src="{{ post.image }}" class="card-img-top" alt="{{ post.title }}">
+                    <div class="card-body">
+                        <span class="post-date">{{ post.date }}</span>
+                        <h5 class="card-title">{{ post.title }}</h5>
+                        <p class="card-text">{{ post.summary }}</p>
+                        <a href="{{ url_for('post_detail', post_id=post.id) }}" class="btn btn-outline-primary">続きを読む</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="container mt-5">
+        <h2 class="section-title text-center mb-4">当サロンの特徴</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-item text-center">
+                    <div class="feature-icon">
+                        <i class="feature-symbol">✂️</i>
+                    </div>
+                    <h4>プロフェッショナルな技術</h4>
+                    <p>経験豊富なスタイリストがあなたに最適なスタイルをご提案します。</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-item text-center">
+                    <div class="feature-icon">
+                        <i class="feature-symbol">🌿</i>
+                    </div>
+                    <h4>オーガニック製品</h4>
+                    <p>頭皮と髪に優しい、厳選されたオーガニック製品のみを使用しています。</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-item text-center">
+                    <div class="feature-icon">
+                        <i class="feature-symbol">🛋️</i>
+                    </div>
+                    <h4>くつろぎの空間</h4>
+                    <p>日常から離れてリラックスできる、落ち着いた雰囲気の空間をご用意しています。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

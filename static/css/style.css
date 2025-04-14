@@ -1,0 +1,317 @@
+/* ベーススタイル */
+:root {
+    --primary-color: #6BCB77; /* 明るい緑 */
+    --primary-light: #A0E4A5;
+    --primary-dark: #4A9F56;
+    --secondary-color: #F9F9F9;
+    --text-color: #333333;
+    --light-text: #666666;
+    --accent-color: #FF9F9F;
+    --white: #FFFFFF;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-color);
+    line-height: 1.6;
+    background-color: var(--white);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+}
+
+a {
+    color: var(--primary-dark);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--primary-color);
+}
+
+/* ナビゲーション */
+.navbar {
+    background-color: var(--white);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 15px 0;
+}
+
+.navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
+
+.nav-link {
+    font-weight: 500;
+    color: var(--text-color);
+    margin: 0 10px;
+    position: relative;
+}
+
+.nav-link:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background: var(--primary-color);
+    left: 0;
+    bottom: -5px;
+    transition: width 0.3s;
+}
+
+.nav-link:hover:after, .nav-link.active:after {
+    width: 100%;
+}
+
+/* ヒーローセクション */
+.hero {
+    padding: 80px 0;
+    background-color: var(--secondary-color);
+}
+
+.hero h1 {
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+}
+
+.hero .lead {
+    color: var(--light-text);
+    margin-bottom: 30px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    padding: 10px 25px;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(106, 203, 119, 0.3);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(106, 203, 119, 0.3);
+}
+
+/* セクションスタイル */
+.section-title {
+    position: relative;
+    margin-bottom: 40px;
+    color: var(--primary-dark);
+}
+
+.section-title:after {
+    content: '';
+    position: absolute;
+    width: 50px;
+    height: 3px;
+    background: var(--primary-color);
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -10px;
+}
+
+/* ブログ記事カード */
+.post-card {
+    border: none;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s;
+    height: 100%;
+}
+
+.post-card:hover {
+    transform: translateY(-10px);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.post-date {
+    display: block;
+    color: var(--light-text);
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+}
+
+.card-title {
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--primary-dark);
+}
+
+/* 特徴セクション */
+.feature-item {
+    padding: 30px;
+    border-radius: 10px;
+    background-color: var(--secondary-color);
+    height: 100%;
+    transition: transform 0.3s;
+}
+
+.feature-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.feature-icon {
+    width: 70px;
+    height: 70px;
+    background-color: var(--primary-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.feature-symbol {
+    font-size: 2rem;
+    color: var(--primary-dark);
+    font-style: normal;
+}
+
+/* フッター */
+.footer {
+    background-color: var(--primary-dark);
+    color: var(--white);
+    padding: 50px 0 20px;
+}
+
+.footer h5 {
+    color: var(--white);
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.footer p {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 記事詳細ページスタイル */
+.post-header {
+    margin-bottom: 40px;
+}
+
+.post-category {
+    display: inline-block;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-bottom: 15px;
+}
+
+.post-title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: var(--primary-dark);
+}
+
+.post-meta {
+    color: var(--light-text);
+    font-size: 0.9rem;
+}
+
+.post-featured-image {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.post-featured-image img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.post-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-color);
+}
+
+.post-content h3 {
+    color: var(--primary-dark);
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.post-content p {
+    margin-bottom: 20px;
+}
+
+.share-icon {
+    font-style: normal;
+    margin-right: 5px;
+}
+
+.post-navigation {
+    margin: 40px 0;
+}
+
+.post-nav-link {
+    display: inline-block;
+    color: var(--primary-dark);
+    font-weight: 500;
+}
+
+.post-nav-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--light-text);
+}
+
+.related-posts .section-title {
+    font-size: 1.5rem;
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 768px) {
+    .hero {
+        padding: 50px 0;
+        text-align: center;
+    }
+    
+    .hero img {
+        margin-top: 30px;
+    }
+    
+    .feature-item {
+        margin-bottom: 20px;
+    }
+    
+    .post-title {
+        font-size: 2rem;
+    }
+    
+    .post-content {
+        font-size: 1rem;
+    }
+}
