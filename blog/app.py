@@ -1,108 +1,227 @@
-from flask import Flask, render_template, abort
-import logging
+# app.py
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+from flaskext.markdown import Markdown
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from datetime import datetime
+from functools import wraps
+import os
+import uuid
 
 app = Flask(__name__)
+Markdown(app)
+app.config['SECRET_KEY'] = 'your_secret_key_here'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# サンプルブログ記事データ
-sample_posts = [
-    {
-        'id': 1,
-        'title': '春のヘアスタイルトレンド2025',
-        'date': '2025-04-01',
-        'summary': '今年の春は、ナチュラルウェーブとパステルカラーが大人気です。当サロンでおすすめのスタイルをご紹介します。',
-        'image': 'static/images/placeholder.jpg',
-        'content': '''
-<p>2025年の春は、自然な美しさとカラフルな表現が融合するヘアスタイルが注目されています。この記事では、当サロンのスタイリストが厳選した春のトレンドスタイルをご紹介します。</p>
+# 画像アップロード設定
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB制限
 
-<h3>1. エフォートレスウェーブ</h3>
-<p>自然な動きを活かした、こなれ感のあるゆるウェーブが今季のトレンドです。朝のスタイリングも簡単で、一日中美しさをキープできます。特に肩上〜ミディアムの長さで取り入れると、女性らしさと軽やかさを両立できるスタイルになります。</p>
+# アップロードフォルダが存在しなければ作成
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-<h3>2. パステルカラーのアクセント</h3>
-<p>春らしい明るいパステルカラーをポイントで取り入れるスタイルが人気です。全体をカラーリングするのではなく、インナーカラーやハイライトとして取り入れることで、オフィスシーンにも対応できるデザインになります。特にラベンダー、ペールピンク、ミントグリーンなどの色味がおすすめです。</p>
+db = SQLAlchemy(app)
 
-<h3>3. レイヤーボブ</h3>
-<p>清潔感と動きを両立したレイヤーボブは、幅広い年齢層に人気のスタイルです。フェイスラインに沿ったカットで小顔効果も期待できます。スタイリングも簡単で、忙しい朝にも最適です。</p>
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-<h3>4. シースルーバング</h3>
-<p>軽やかな印象を与えるシースルーバングは、春の装いにぴったりです。額を適度に見せることで開放感のある表情を作り出します。重すぎない前髪は季節の変わり目にもおすすめのスタイルです。</p>
+# モデル定義
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    image_filename = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-<h3>5. サステナブルヘアケア</h3>
-<p>2025年は髪の健康に焦点を当てたヘアケアも重要なトレンドです。当サロンでは、オーガニック成分を使用したトリートメントで、カラーリングやパーマによるダメージを最小限に抑える施術を提供しています。美しいスタイルを長く楽しむためのヘアケア方法もご案内しています。</p>
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
 
-<p>トレンドを取り入れつつも、お客様一人ひとりの髪質や顔の形、ライフスタイルに合わせたスタイルをご提案いたします。春の新しいスタイルをお考えの方は、ぜひ当サロンにご相談ください。</p>
-        '''
-    },
-    {
-        'id': 2,
-        'title': '髪の毛を健康に保つための5つのコツ',
-        'date': '2025-03-25',
-        'summary': '毎日のケアで髪の毛を美しく保ちましょう。今回は自宅でできる簡単なヘアケアのコツをお伝えします。',
-        'image': 'static/images/placeholder.jpg',
-        'content': '''
-<p>美しい髪を保つためには、日々のケアが欠かせません。この記事では、自宅で簡単にできる効果的なヘアケアのコツを5つご紹介します。</p>
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
-<h3>1. 正しいシャンプー方法</h3>
-<p>髪を洗う前にしっかりとブラッシングして、髪の絡まりをほぐしておきましょう。シャンプーの前に髪をぬるま湯でよくすすぎ、汚れを浮かせます。シャンプーは頭皮に直接つけ、指の腹でマッサージするように洗いましょう。すすぎはしっかりと行い、シャンプー剤が残らないようにします。</p>
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
-<h3>2. 適切な頻度でのトリートメント</h3>
-<p>週に1〜2回、髪の状態に合わせてトリートメントを行いましょう。特に毛先は乾燥しやすいので、重点的にケアすることをおすすめします。トリートメント後は冷水ですすぐと、キューティクルが引き締まりツヤが出ます。</p>
+# 管理者認証デコレータ
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('管理者ログインが必要です', 'danger')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-<h3>3. 正しいブラッシング</h3>
-<p>髪が濡れているときは特に傷みやすいので、乾いてからブラッシングすることをおすすめします。毛先から徐々に上に向かってとかすと、髪が絡まることなくスムーズにブラッシングできます。天然毛のブラシや широめの歯のコームを使用すると、髪への負担が少なくなります。</p>
-
-<h3>4. 熱ダメージからの保護</h3>
-<p>ドライヤーやヘアアイロンを使用する前には、必ずヒートプロテクト効果のあるスタイリング剤を使用しましょう。また、できるだけ低温で使用し、一か所に熱を当てる時間を短くすることでダメージを軽減できます。週に1回は自然乾燥の日を作るのもおすすめです。</p>
-
-<h3>5. バランスの良い食事と水分摂取</h3>
-<p>美しい髪は体の内側からも作られます。タンパク質、ビタミン、ミネラルをバランス良く摂取し、十分な水分補給を心がけましょう。特にビタミンEやオメガ3脂肪酸は髪の健康に欠かせない栄養素です。</p>
-
-<p>これらの基本的なケアを日常に取り入れることで、髪の健康は大きく改善します。ただし、極度の乾燥や傷みが気になる場合は、サロンでのプロフェッショナルなケアもおすすめです。当サロンではお客様の髪質に合わせたカスタムケアメニューもご用意していますので、お気軽にご相談ください。</p>
-        '''
-    },
-    {
-        'id': 3,
-        'title': 'スタイリスト山田のおすすめ商品',
-        'date': '2025-03-15',
-        'summary': '当サロンの人気スタイリスト山田が、実際に使っているおすすめの商品をご紹介します。',
-        'image': 'static/images/placeholder.jpg',
-        'content': '''
-<p>こんにちは、スタイリストの山田です。今回は私が実際に愛用している、そしてお客様にも自信を持っておすすめできるヘアケア商品をご紹介します。</p>
-
-<h3>1. モイスチャーシャンプー「ハイドラブリス」</h3>
-<p>乾燥が気になる方に特におすすめのシャンプーです。アルガンオイルとシアバターが配合されており、洗浄力はしっかりありながらも、必要な潤いは残してくれます。香りも上品で、バスタイムが癒しの時間になると多くのお客様に好評です。</p>
-
-<h3>2. スカルプエッセンス「ルートリバイブ」</h3>
-<p>頭皮環境を整えるための美容液です。ペパーミントとティーツリーの清涼感ある香りで、使用後は頭皮がすっきりとした感覚になります。特に夏場や頭皮の脂分が気になる方に重宝されています。実際に使い始めてから髪のハリやコシが改善したというお声をたくさんいただいています。</p>
-
-<h3>3. 洗い流さないトリートメント「シルクセラム」</h3>
-<p>私が最も手放せない商品の一つです。ほんの少量を毛先中心になじませるだけで、指通りが格段に良くなります。シルクプロテインとアルガンオイルが配合されており、熱からの保護効果も高いのでスタイリング前に使用するのがおすすめです。</p>
-
-<h3>4. ヘアオイル「グローミスト」</h3>
-<p>スプレータイプのオイルミストで、髪全体に均一に油分を補給できるのが特徴です。重くならず、自然なツヤを演出してくれます。特にカラーリングをされている方の色持ちが良くなるという効果も期待できます。</p>
-
-<h3>5. スタイリングクリーム「フレックスホールド」</h3>
-<p>適度なホールド力とナチュラルな仕上がりが特徴のスタイリング剤です。ベタつきがなく、髪に柔らかな動きを与えてくれます。少量でも効果があるので、コスパも良好です。</p>
-
-<p>これらの商品は当サロンでも取り扱っていますので、興味のある方はぜひお試しください。また、お客様一人ひとりの髪質や悩みに合わせたカスタムケアのアドバイスも行っていますので、お気軽にご相談ください。</p>
-        '''
-    }
-]
-
+# ルート設定
 @app.route('/')
 def index():
-    return render_template('index.html', posts=sample_posts)
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template('index.html', posts=posts)
 
 @app.route('/post/<int:post_id>')
 def post_detail(post_id):
-    # 記事IDに基づいて記事を検索
-    post = next((p for p in sample_posts if p['id'] == post_id), None)
-    
-    # 記事が見つからない場合は404エラー
-    if post is None:
-        abort(404)
+    post = Post.query.get_or_404(post_id)
+    return render_template('post_detail.html', post=post)
+
+# 管理者ログイン
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
         
-    # 記事詳細ページをレンダリング
-    return render_template('post_detail.html', post=post, sample_posts=sample_posts)
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+            flash('ログインしました', 'success')
+            return redirect(url_for('admin_dashboard'))
+        
+        flash('ユーザー名またはパスワードが間違っています', 'danger')
+    
+    return render_template('admin/login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('user_id', None)
+    flash('ログアウトしました', 'info')
+    return redirect(url_for('index'))
+
+# 管理者ダッシュボード
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template('admin/dashboard.html', posts=posts)
+
+# 記事投稿
+@app.route('/admin/post/new', methods=['GET', 'POST'])
+@admin_required
+def admin_new_post():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        
+        if not title or not content:
+            flash('タイトルと内容を入力してください', 'danger')
+            return render_template('admin/post_form.html')
+        
+        # 画像アップロード処理
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                # ファイル名の衝突を避けるためにUUIDを使用
+                filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                image_filename = filename
+        
+        post = Post(title=title, content=content, image_filename=image_filename)
+        db.session.add(post)
+        db.session.commit()
+        
+        flash('記事を投稿しました', 'success')
+        return redirect(url_for('admin_dashboard'))
+        
+    return render_template('admin/post_form.html')
+
+# 記事編集
+@app.route('/admin/post/edit/<int:post_id>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        
+        if not title or not content:
+            flash('タイトルと内容を入力してください', 'danger')
+            return render_template('admin/post_form.html', post=post)
+        
+        # 画像アップロード処理
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                # 古い画像があれば削除
+                if post.image_filename:
+                    old_file_path = os.path.join(app.config['UPLOAD_FOLDER'], post.image_filename)
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+                
+                # 新しい画像を保存
+                filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                post.image_filename = filename
+        
+        post.title = title
+        post.content = content
+        db.session.commit()
+        
+        flash('記事を更新しました', 'success')
+        return redirect(url_for('admin_dashboard'))
+        
+    return render_template('admin/post_form.html', post=post)
+
+# 記事削除
+@app.route('/admin/post/delete/<int:post_id>', methods=['POST'])
+@admin_required
+def admin_delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    
+    # 投稿に関連する画像も削除
+    if post.image_filename:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], post.image_filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    
+    db.session.delete(post)
+    db.session.commit()
+    
+    flash('記事を削除しました', 'info')
+    return redirect(url_for('admin_dashboard'))
+
+# 初期管理者ユーザー作成（初回実行時のみ）
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    if User.query.count() > 0:
+        flash('セットアップは既に完了しています', 'info')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not username or not password:
+            flash('ユーザー名とパスワードを入力してください', 'danger')
+            return render_template('admin/setup.html')
+        
+        user = User(username=username)
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('管理者アカウントを作成しました。ログインしてください。', 'success')
+        return redirect(url_for('admin_login'))
+        
+    return render_template('admin/setup.html')
+
+# アップロードされた画像を提供するルート
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)

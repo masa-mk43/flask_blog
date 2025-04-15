@@ -17,12 +17,12 @@
             
             <!-- メイン画像 -->
             <div class="post-featured-image mb-4">
-                <img src="{{ url_for('static', filename=post.image.replace('static/', '')) }}" alt="{{ post.title }}" class="img-fluid rounded">
+                <img src="{{ url_for('uploaded_file', filename=image_filename) }}" alt="{{ post.title }}" class="img-fluid rounded">
             </div>
             
             <!-- 記事本文 -->
             <div class="post-content">
-                {{ post.content|safe }}
+                {{ post.content|markdown }}
             </div>
             
             <!-- シェアボタン -->
@@ -54,26 +54,6 @@
                             <span class="post-nav-label">次の記事</span>
                         </a>
                     </div>
-                </div>
-            </div>
-            
-            <!-- 関連記事 -->
-            <div class="related-posts mt-5 pt-4 border-top">
-                <h3 class="section-title text-center mb-4">関連記事</h3>
-                <div class="row">
-                    {% for p in sample_posts[:3] if p.id != post.id %}
-                    <div class="col-md-4 mb-4">
-                        <div class="card post-card">
-                            <img src="{{ url_for('static', filename=p.image.replace('static/', '')) }}" class="card-img-top" alt="{{ p.title }}">
-                            <div class="card-body">
-                                <span class="post-date">{{ p.date }}</span>
-                                <h5 class="card-title">{{ p.title }}</h5>
-                                <p class="card-text">{{ p.summary }}</p>
-                                <a href="{{ url_for('post_detail', post_id=p.id) }}" class="btn btn-outline-primary">続きを読む</a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
                 </div>
             </div>
         </div>

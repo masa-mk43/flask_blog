@@ -1,0 +1,33 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if post %}記事編集{% else %}新規投稿{% endif %}{% endblock %}
+
+{% block content %}
+<h2>{% if post %}記事編集{% else %}新規投稿{% endif %}</h2>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="title" class="form-label">タイトル</label>
+        <input type="text" class="form-control" id="title" name="title" value="{{ post.title if post else '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="image" class="form-label">アイキャッチ画像</label>
+        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+        {% if post and post.image_filename %}
+        <div class="mt-2">
+            <p>現在の画像：</p>
+            <img src="{{ url_for('uploaded_file', filename=post.image_filename) }}" alt="Current image" class="img-thumbnail" style="max-height: 200px;">
+            <p class="text-muted">新しい画像をアップロードすると、現在の画像は置き換えられます。</p>
+        </div>
+        {% endif %}
+    </div>
+    <div class="mb-3">
+        <label for="content" class="form-label">内容</label>
+        <textarea class="form-control" id="content" name="content" rows="10" required>{{ post.content if post else '' }}</textarea>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">キャンセル</a>
+    </div>
+</form>
+{% endblock %}
